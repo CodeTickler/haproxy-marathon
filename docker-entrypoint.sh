@@ -35,13 +35,18 @@ defaults
   timeout connect  5000
   timeout client  50000
   timeout server  50000
+EOF
+
+if [ ! -z "$ENABLE_STATS" ]; then
+cat <<EOF
 listen stats
-  bind 127.0.0.1:9090
+  bind ${STATS_BIND:-127.0.0.1:9090}
   balance
   mode http
   stats enable
-  stats auth admin:admin
+  stats auth ${STATS_USER:-admin}:${STATS_PASSWORD:-admin}
 EOF
+fi
 }
 
 function apps {
