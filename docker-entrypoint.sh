@@ -32,9 +32,9 @@ defaults
   log            global
   retries             3
   maxconn          2000
-  timeout connect  5000
-  timeout client  50000
-  timeout server  50000
+  timeout connect  11s
+  timeout client   11m
+  timeout server   11m
 EOF
 
 if [ ! -z "$ENABLE_STATS" ]; then
