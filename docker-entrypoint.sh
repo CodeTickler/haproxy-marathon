@@ -44,8 +44,13 @@ listen stats
   balance
   mode http
   stats enable
+  stats uri /
+EOF
+if [ ! -z "$STATS_USER" ] || [ ! -z "$STATS_PASSWORD" ]; then
+cat <<EOF
   stats auth ${STATS_USER:-admin}:${STATS_PASSWORD:-admin}
 EOF
+fi
 fi
 }
 
