@@ -50,6 +50,11 @@ if [ ! -z "$STATS_USER" ] || [ ! -z "$STATS_PASSWORD" ]; then
 cat <<EOF
   stats auth ${STATS_USER:-admin}:${STATS_PASSWORD:-admin}
 EOF
+if [ ! -z "$STATS_BIND_PORT_INDEX" ]; then
+cat <<EOF
+  bind 0.0.0.0:${PORT${STATS_BIND_PORT_INDEX}}
+EOF
+fi
 fi
 fi
 }
