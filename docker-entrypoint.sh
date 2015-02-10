@@ -37,25 +37,31 @@ defaults
   timeout server   11m
 EOF
 
-if [ ! -z "$ENABLE_STATS" ]; then
-cat <<EOF
-listen stats
-  bind ${STATS_BIND:-127.0.0.1:9090}
+if [ ! -z "$ENABLE_STATS" ]
+then
+  echo "listen stats"
+
+  if [ ! -z "$STATS_LISTEN_PORT" ]
+  then
+    echo "  bind ${STATS_LISTEN_HOST:-127.0.0.1}:${STATS_LISTEN_PORT:-9090}"
+  fi
+
+  if [ ! -z "$STATS_LISTEN_PORT_INDEX" ]
+  then
+    echo "  bind ${STATS_LISTEN_HOST:-127.0.0.1}:$(eval echo \${PORT$STATS_LISTEN_PORT_INDEX})"
+  fi
+
+  cat <<EOF
   balance
   mode http
   stats enable
   stats uri /
 EOF
-if [ ! -z "$STATS_USER" ] || [ ! -z "$STATS_PASSWORD" ]; then
-cat <<EOF
-  stats auth ${STATS_USER:-admin}:${STATS_PASSWORD:-admin}
-EOF
-fi
-if [ ! -z "$STATS_BIND_PORT_INDEX" ]; then
-cat <<EOF
-  bind 0.0.0.0:$(eval echo \${PORT$STATS_BIND_PORT_INDEX})
-EOF
-fi
+
+  if [ ! -z "$STATS_USER" ] || [ ! -z "$STATS_PASSWORD" ]
+  then
+    echo "  stats auth ${STATS_USER:-admin}:${STATS_PASSWORD:-admin}"
+  fi
 fi
 }
 
