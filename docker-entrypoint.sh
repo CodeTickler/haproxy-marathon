@@ -53,7 +53,7 @@ EOF
 fi
 if [ ! -z "$STATS_BIND_PORT_INDEX" ]; then
 cat <<EOF
-  bind 0.0.0.0:${PORT${STATS_BIND_PORT_INDEX}}
+  bind 0.0.0.0:$(eval echo \${PORT$STATS_BIND_PORT_INDEX})
 EOF
 fi
 fi
