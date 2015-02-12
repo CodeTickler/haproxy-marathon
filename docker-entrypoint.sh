@@ -78,6 +78,14 @@ function apps {
     local app_port="$2"
     shift 2
 
+    for ignored_app in ${IGNORED_APPS}
+    do
+      if [ "${app_name}" = "${ignored_app}" ]; then
+        shift $#
+        continue 2
+      fi
+    done
+
     if [ ! -z "${app_port##*[!0-9]*}" ]
     then
       cat <<EOF
