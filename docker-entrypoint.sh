@@ -32,9 +32,9 @@ defaults
   log            global
   retries             3
   maxconn          2000
-  timeout connect  11s
-  timeout client   11m
-  timeout server   11m
+  timeout connect  ${CONNECT_TIMEOUT:-11s}
+  timeout client   ${CLIENT_TIMEOUT:-11m}
+  timeout server   ${SERVER_TIMEOUT:-11m}
 EOF
 
 if [ ! -z "$ENABLE_STATS" ]
