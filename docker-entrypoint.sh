@@ -25,8 +25,7 @@ function config {
 function header {
 cat <<EOF
 global
-  log /dev/log local0
-  log /dev/log local1 notice
+  log /dev/log local0 notice
   maxconn 4096
 defaults
   log            global
