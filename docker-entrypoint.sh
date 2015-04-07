@@ -112,6 +112,7 @@ if [ "$#" -lt 1 ]; then
   exit 1
 fi
 
+mkdir -p $(dirname "$HAPROXY_CFG")
 config "$@" > "$HAPROXY_CFG"
 haproxy_start
 
