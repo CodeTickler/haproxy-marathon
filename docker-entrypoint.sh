@@ -17,6 +17,24 @@ function haproxy_reload {
   haproxy -f "$HAPROXY_CFG" -D -p "$HAPROXY_PID" -sf $(cat "$HAPROXY_PID")
 }
 
+function haproxy_soft_reload {
+  # Soft-reload haproxy, avoiding any broken connection attempts
+  # (see http://marc.info/?l=haproxy&m=133262017329084&w=2)
+  # (see also http://engineeringblog.yelp.com/2015/04/true-zero-downtime-haproxy-reloads.html)
+
+  PORTS=$(cat "$HAPROXY_CFG" | grep '^ *\<bind\>.*:' | sed -E 's/.*:(.+)/\1/')
+  for PORT in $PORTS; do
+      iptables -I INPUT -p tcp --dport $PORT --syn -j DROP
+  done
+
+  sleep 0.5
+  haproxy_reload
+
+  for PORT in $PORTS; do
+      iptables -D INPUT -p tcp --dport $PORT --syn -j DROP
+  done
+}
+
 function config {
   header
   apps "$@"
@@ -123,6 +141,10 @@ do
   if ! diff -q "$HAPROXY_CFG_TMP" "$HAPROXY_CFG" >&2
   then
     cp "$HAPROXY_CFG_TMP" "$HAPROXY_CFG"
-    haproxy_reload
+    if [ ! -z "$HAPROXY_SOFT_RELOAD" ]; then
+        haproxy_soft_reload
+    else
+        haproxy_reload
+    fi
   fi
 done
