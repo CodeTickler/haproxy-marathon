@@ -9,6 +9,11 @@ HAPROXY_PID=/var/run/haproxy.pid
 HAPROXY_CFG=/etc/haproxy/haproxy.cfg
 HAPROXY_CFG_TMP=/tmp/haproxy.cfg
 
+LOGGER=${LOGGER:-logger -s -t haproxy}
+function log {
+  echo "$@" | $LOGGER
+}
+
 function haproxy_start {
   haproxy -f "$HAPROXY_CFG" -D -p "$HAPROXY_PID"
 }
@@ -22,7 +27,9 @@ function haproxy_soft_reload {
   # (see http://marc.info/?l=haproxy&m=133262017329084&w=2)
   # (see also http://engineeringblog.yelp.com/2015/04/true-zero-downtime-haproxy-reloads.html)
 
-  PORTS=$(cat "$HAPROXY_CFG" | grep '^ *\<bind\>.*:' | sed -E 's/.*:(.+)/\1/')
+  PORTS=$(cat "$HAPROXY_CFG" | grep '^ *\<bind\>.*:' | sed -E 's/.*:(.+)/\1/' | sort -n | paste -s -d' ')
+  log "Haproxy soft reload, protecting ports ${PORTS}"
+
   for PORT in $PORTS; do
       iptables -I INPUT -p tcp --dport $PORT --syn -j DROP
   done
@@ -134,17 +141,23 @@ mkdir -p $(dirname "$HAPROXY_CFG")
 config "$@" > "$HAPROXY_CFG"
 haproxy_start
 
+log "Haproxy started."
+
 while true
 do
   sleep "$REFRESH_TIMEOUT"
   config "$@" > "$HAPROXY_CFG_TMP"
-  if ! diff -q "$HAPROXY_CFG_TMP" "$HAPROXY_CFG" >&2
+  if ! diff -q "$HAPROXY_CFG_TMP" "$HAPROXY_CFG" >/dev/null
   then
     cp "$HAPROXY_CFG_TMP" "$HAPROXY_CFG"
+    log "Haproxy config changed, reloading"
+
     if [ ! -z "$HAPROXY_SOFT_RELOAD" ]; then
         haproxy_soft_reload
     else
         haproxy_reload
     fi
+
+    log "Haproxy restarted."
   fi
 done
