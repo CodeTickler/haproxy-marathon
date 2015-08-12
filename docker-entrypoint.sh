@@ -29,6 +29,7 @@ function haproxy_soft_cleanup {
   log "Cleaning up iptables rules for ports ${PORTS}"
 
   for PORT in $PORTS; do
+      echo "Deleting iptables rule for port ${PORT}; please ignore 'Bad rule' error if it appears below"
       iptables -D INPUT -p tcp --dport $PORT --syn -j DROP || true
   done
 }
