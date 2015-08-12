@@ -15,11 +15,22 @@ function log {
 }
 
 function haproxy_start {
+  log "Starting haproxy process"
   haproxy -f "$HAPROXY_CFG" -D -p "$HAPROXY_PID"
 }
 
 function haproxy_reload {
+  log "Reloading haproxy process"
   haproxy -f "$HAPROXY_CFG" -D -p "$HAPROXY_PID" -sf $(cat "$HAPROXY_PID")
+}
+
+function haproxy_soft_cleanup {
+  PORTS=$(cat "$HAPROXY_CFG" | grep '^ *\<bind\>.*:' | sed -E 's/.*:(.+)/\1/' | sort -n | paste -s -d' ')
+  log "Cleaning up iptables rules for ports ${PORTS}"
+
+  for PORT in $PORTS; do
+      iptables -D INPUT -p tcp --dport $PORT --syn -j DROP || true
+  done
 }
 
 function haproxy_soft_reload {
@@ -37,9 +48,7 @@ function haproxy_soft_reload {
   sleep 0.5
   haproxy_reload
 
-  for PORT in $PORTS; do
-      iptables -D INPUT -p tcp --dport $PORT --syn -j DROP
-  done
+  haproxy_soft_cleanup
 }
 
 function config {
@@ -139,6 +148,11 @@ fi
 
 mkdir -p $(dirname "$HAPROXY_CFG")
 config "$@" > "$HAPROXY_CFG"
+
+if [ ! -z "$HAPROXY_SOFT_RELOAD" ]; then
+    haproxy_soft_cleanup
+fi
+
 haproxy_start
 
 log "Haproxy started."
